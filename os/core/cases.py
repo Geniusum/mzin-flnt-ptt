@@ -46,32 +46,33 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
-"Imports"
-
-import importlib.util, os
-from . import cases
-
-
 "Classes"
 
-class INCLUDER():
-    """
-    INCLUDER class will include all methods to get a flexible
-    Python modules ecosystem and includes system.
-    """
+class Cases():
+    class CasesException(BaseException): ...
+    class EmptyString(CasesException): ...
 
-    "Exceptions defining"
+    def parse_s(self, s:str) -> str:
+        to_r = [*"_-+#/\\@."]
+        for to_r_ in to_r:
+            s = s.replace(to_r_, " ")
+        s = s.lower().strip()
+        if not len(s): raise self.EmptyString()
+        return s
 
-    class IncluderException(BaseException): ...
-    class NotExistantPath(IncluderException): ...
+    def camel_case(self, s:str) -> str:
+        s = self.parse_s
+        r = ""
+        for i, word in enumerate(s.split()):
+            if i != 0:
+                r += word.capitalize()
+            else:
+                r += word
+        return r
 
-
-    "Methods"
-    
-    def include_files(self, paths:list[str]) -> None:
-        for path in paths:
-            path = path.strip()
-            if not os.path.exists(path):
-                raise self.NotExistantPath(path)
-            module_name = os.path.splitext(os.path.basename(path)).lower() # TODO: Continue here to have 'DirnameModulename'
-            module = importlib.util.spec_from_file_location()
+    def upper_camel_case(self, s:str) -> str:
+        s = self.parse_s
+        r = ""
+        for word in s.split():
+            r += word.capitalize()
+        return r

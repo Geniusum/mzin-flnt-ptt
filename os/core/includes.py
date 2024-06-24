@@ -46,6 +46,34 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
+"Imports"
+
+import importlib.util, os
+from . import cases
+
+
 "Classes"
 
-# TODO: Do the UpperCamelCase class.
+class INCLUDER():
+    """
+    INCLUDER class will include all methods to get a flexible
+    Python modules ecosystem and includes system.
+    """
+
+    "Exceptions defining"
+
+    class IncluderException(BaseException): ...
+    class NotExistantPath(IncluderException): ...
+
+
+    "Methods"
+    
+    def include_files(self, paths:list[str]) -> None:
+        for path in paths:
+            path = path.strip()
+            if not os.path.exists(path):
+                raise self.NotExistantPath(path)
+            module_name = cases.Cases().upper_camel_case(os.path.splitext(os.path.basename(os.path.dirname(path)))[0] + " " + os.path.splitext(os.path.basename(path))[0])
+            spec = importlib.util.spec_from_file_location(module_name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(globals())            
