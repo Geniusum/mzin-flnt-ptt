@@ -46,38 +46,37 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
+"Imports"
+
+from core.paths import *
+from core.includes import *
+from core.utils import *
+
+
+"Plan"
+
+ProcMainprocess: SoonIncluded
+LibsSessions: SoonIncluded
+
+
+"Includes"
+
+INCLUDER().include_file(PATHs().join(PATHs().proc_path, "mainprocess.py"), globals())
+INCLUDER().include_file(PATHs().join(PATHs().libs_path, "sessions.py"), globals())
+
+
 "Classes"
 
-class Cases():
-    "Exceptions defining"
+class RUNNER():
+    def __init__(self) -> None:
+        self.session = LibsSessions.Session()
 
-    class CasesException(BaseException): ...
-    class EmptyString(CasesException): ...
+    def process(self) -> None:
+        ...
 
 
-    "Methods"
+"Start Runner"
 
-    def parse_s(self, s:str) -> str:
-        to_r = [*"_-+#/\\@."]
-        for to_r_ in to_r:
-            s = s.replace(to_r_, " ")
-        s = s.lower().strip()
-        if not len(s): raise self.EmptyString()
-        return s
-
-    def camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for i, word in enumerate(s.split()):
-            if i != 0:
-                r += word.capitalize()
-            else:
-                r += word
-        return r
-
-    def upper_camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for word in s.split():
-            r += word.capitalize()
-        return r
+if __name__ == "__main__":
+    RUNNER_INSTANCE: RUNNER = RUNNER()
+    RUNNER_INSTANCE.process()

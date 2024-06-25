@@ -46,38 +46,37 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
+"Imports"
+
+import os
+
+
 "Classes"
 
-class Cases():
+class PATHs():
     "Exceptions defining"
 
-    class CasesException(BaseException): ...
-    class EmptyString(CasesException): ...
+    class PathException(BaseException): ...
+    class NotExistantPath(PathException): ...
+
+
+    "Variables"
+
+    script_path = os.path.abspath(__file__)
+    dir_script_path = os.path.dirname(script_path)
+    core_path = dir_script_path
+    os_path = os.path.dirname(dir_script_path)
+    proc_path = os.path.join(os_path, "proc")
+    libs_path = os.path.join(os_path, "libs")
+    sessions_path = os.path.join(os_path, "sessions")
 
 
     "Methods"
 
-    def parse_s(self, s:str) -> str:
-        to_r = [*"_-+#/\\@."]
-        for to_r_ in to_r:
-            s = s.replace(to_r_, " ")
-        s = s.lower().strip()
-        if not len(s): raise self.EmptyString()
-        return s
-
-    def camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for i, word in enumerate(s.split()):
-            if i != 0:
-                r += word.capitalize()
-            else:
-                r += word
-        return r
-
-    def upper_camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for word in s.split():
-            r += word.capitalize()
-        return r
+    def join(self, *args): return os.path.join(*args)
+    
+    def exists(self, path:str): return os.path.exists(path)
+    
+    def validate(self, path:str):
+        if not self.exists(path): raise self.NotExistantPath(path)
+        else: return path

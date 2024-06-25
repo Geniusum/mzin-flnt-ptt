@@ -46,38 +46,60 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
+"Imports"
+
+import uuid, random
+
+
 "Classes"
 
-class Cases():
-    "Exceptions defining"
+class SoonIncluded():
+    """
+    A class for initialize names of modules not even
+    included.
+    """
 
-    class CasesException(BaseException): ...
-    class EmptyString(CasesException): ...
+class ChangeableByUser():
+    """
+    A class who say at the user he can change the value.
+    """
 
+class SoonUsed():
+    """
+    A class for initialize variables without use it at the
+    moment.
+    """
 
-    "Methods"
+class IDs():
+    def generate_MzV1_XXL(self):
+        _ = [*str(uuid.uuid4()).replace(":", "").replace("-", "")]
+        random.shuffle(_)
+        __ = [*str(uuid.uuid4()).replace(":", "").replace("-", "")]
+        _ = [*"".join(_) + "".join(__)]
+        random.shuffle(_)
+        _ = "".join(_)
+        return _
 
-    def parse_s(self, s:str) -> str:
-        to_r = [*"_-+#/\\@."]
-        for to_r_ in to_r:
-            s = s.replace(to_r_, " ")
-        s = s.lower().strip()
-        if not len(s): raise self.EmptyString()
-        return s
-
-    def camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for i, word in enumerate(s.split()):
-            if i != 0:
-                r += word.capitalize()
-            else:
-                r += word
-        return r
-
-    def upper_camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for word in s.split():
-            r += word.capitalize()
-        return r
+    def generate_MzV1_XL(self):
+        r = self.generate_MzV1_XXL()
+        return r[:32]
+    
+    def generate_MzV1_L(self):
+        r = self.generate_MzV1_XL()
+        return r[:16]
+    
+    def generate_MzV1_M(self):
+        r = self.generate_MzV1_L()
+        return r[:8]
+    
+    def generate_MzV1_S(self):
+        r = self.generate_MzV1_M()
+        return r[:6]
+    
+    def generate_MzV1_XS(self):
+        r = self.generate_MzV1_S()
+        return r[:4]
+    
+    def generate_MzV1_XXS(self):
+        r = self.generate_MzV1_XS()
+        return r[:2]

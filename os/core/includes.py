@@ -48,7 +48,7 @@
 
 "Imports"
 
-import importlib.util, os
+import importlib.util, os, sys
 from . import cases
 
 
@@ -64,16 +64,50 @@ class INCLUDER():
 
     class IncluderException(BaseException): ...
     class NotExistantPath(IncluderException): ...
+    class InvalidGlobals(IncluderException): ...
 
 
     "Methods"
     
-    def include_files(self, paths:list[str]) -> None:
+    def include_files(self, paths: list[str], _globals:dict) -> dict:
+        """
+        Include Python files, name format : DirnameModulename
+        """
+
+        if not isinstance(_globals, dict):
+            raise self.InvalidGlobals(str(_globals))
+        
         for path in paths:
             path = path.strip()
             if not os.path.exists(path):
-                raise self.NotExistantPath(path)
-            module_name = cases.Cases().upper_camel_case(os.path.splitext(os.path.basename(os.path.dirname(path)))[0] + " " + os.path.splitext(os.path.basename(path))[0])
+                raise self.NotExistantPath(f"Path does not exist: {path}")
+            
+            module_name = cases.Cases().upper_camel_case(
+                os.path.splitext(
+                    os.path.basename(
+                        os.path.dirname(path)
+                    )
+                )[0] + " " +
+                os.path.splitext(
+                    os.path.basename(path)
+                )[0]
+            )
+            
             spec = importlib.util.spec_from_file_location(module_name, path)
+            
             module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(globals())            
+            
+            sys.modules[module_name] = module
+            
+            spec.loader.exec_module(module)
+            
+            _globals[module_name] = module
+        
+        return _globals
+    
+    def include_file(self, path:str, _globals:dict) -> dict:
+        """
+        Include Python file, name format : DirnameModulename
+        """
+
+        return self.include_files([path], _globals)

@@ -45,39 +45,3 @@
 #
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
-
-"Classes"
-
-class Cases():
-    "Exceptions defining"
-
-    class CasesException(BaseException): ...
-    class EmptyString(CasesException): ...
-
-
-    "Methods"
-
-    def parse_s(self, s:str) -> str:
-        to_r = [*"_-+#/\\@."]
-        for to_r_ in to_r:
-            s = s.replace(to_r_, " ")
-        s = s.lower().strip()
-        if not len(s): raise self.EmptyString()
-        return s
-
-    def camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for i, word in enumerate(s.split()):
-            if i != 0:
-                r += word.capitalize()
-            else:
-                r += word
-        return r
-
-    def upper_camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for word in s.split():
-            r += word.capitalize()
-        return r

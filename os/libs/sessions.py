@@ -46,38 +46,45 @@
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
 
+"Imports"
+
+from core.utils import *
+from core.paths import *
+import os, logging, configparser
+
+
 "Classes"
 
-class Cases():
-    "Exceptions defining"
+class Session():
+    def __init__(self) -> None:
+        self.id = IDs().generate_MzV1_L()
+        self.path = PATHs().join(PATHs().sessions_path, self.id)
+        
+        while PATHs().exists(self.path):
+            self.id = IDs().generate_MzV1_L()
+            self.path = PATHs().join(PATHs().sessions_path, self.id)
+        
+        os.mkdir(self.path)
+        self.populate_session()
+        self.log_path = PATHs().join(self.path, "session.log")
+        self.logger = logging.getLogger(self.id)
+        self.logger_file_handler = logging.FileHandler(self.log_path)
+        self.logger_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        self.logger_file_handler.setFormatter(self.logger_formatter)
+        self.logger.addHandler(self.logger_file_handler)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.info("Logger initialized.")
+        self.fill_session()
 
-    class CasesException(BaseException): ...
-    class EmptyString(CasesException): ...
+    def populate_session(self):
+        open(PATHs().join(self.path, "session.log"), "w+").close()
+        open(PATHs().join(self.path, "terminated.lock"), "w+").close()
+        open(PATHs().join(self.path, "info.ini"), "w+").close()
 
-
-    "Methods"
-
-    def parse_s(self, s:str) -> str:
-        to_r = [*"_-+#/\\@."]
-        for to_r_ in to_r:
-            s = s.replace(to_r_, " ")
-        s = s.lower().strip()
-        if not len(s): raise self.EmptyString()
-        return s
-
-    def camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for i, word in enumerate(s.split()):
-            if i != 0:
-                r += word.capitalize()
-            else:
-                r += word
-        return r
-
-    def upper_camel_case(self, s:str) -> str:
-        s = self.parse_s(s)
-        r = ""
-        for word in s.split():
-            r += word.capitalize()
-        return r
+    def fill_session(self):
+        terminated = open(PATHs().join(self.path, "terminated.lock"), "w+")
+        terminated.write("0")
+        terminated.close()
+        info = open(PATHs().join(self.path, "info.ini"), "w+")
+        info.write(f"[SESSION]\nId = {self.id}")
+        info.close()
