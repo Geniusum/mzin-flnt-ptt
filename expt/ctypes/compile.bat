@@ -1,1 +1,1 @@
-gcc -FPIC -shared -o clib.so clib.cpp
+gcc -fPIC -shared -o clib.so clib.cpp

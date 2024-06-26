@@ -48,7 +48,7 @@
 
 "Imports"
 
-import importlib.util, os, sys
+import importlib.util, os, sys, ctypes
 from . import cases
 
 
@@ -57,7 +57,7 @@ from . import cases
 class INCLUDER():
     """
     INCLUDER class will include all methods to get a flexible
-    Python modules ecosystem and includes system.
+    Python/C modules ecosystem and includes system.
     """
 
     "Exceptions defining"
@@ -65,13 +65,15 @@ class INCLUDER():
     class IncluderException(BaseException): ...
     class NotExistantPath(IncluderException): ...
     class InvalidGlobals(IncluderException): ...
+    class IsDirectory(IncluderException): ...
+    class InvalidFileExtension(IncluderException): ...
 
 
     "Methods"
     
     def include_files(self, paths: list[str], _globals:dict) -> dict:
         """
-        Include Python files, name format : DirnameModulename
+        Include files, name format : DirnameModulename
         """
 
         if not isinstance(_globals, dict):
@@ -79,9 +81,16 @@ class INCLUDER():
         
         for path in paths:
             path = path.strip()
+
             if not os.path.exists(path):
-                raise self.NotExistantPath(f"Path does not exist: {path}")
+                raise self.NotExistantPath(path)
+            if os.path.isdir(path):
+                raise self.IsDirectory(path)
             
+            ext = os.path.splitext(os.path.basename(path))[1]
+            py_ext = [".py", ".pyi", ".pyt"]
+            shared_ext = [".so"]
+
             module_name = cases.Cases().upper_camel_case(
                 os.path.splitext(
                     os.path.basename(
@@ -92,22 +101,25 @@ class INCLUDER():
                     os.path.basename(path)
                 )[0]
             )
-            
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            
-            module = importlib.util.module_from_spec(spec)
-            
-            sys.modules[module_name] = module
-            
-            spec.loader.exec_module(module)
-            
-            _globals[module_name] = module
-        
-        return _globals
+
+            if ext in py_ext:
+                spec = importlib.util.spec_from_file_location(module_name, path)
+                
+                module = importlib.util.module_from_spec(spec)
+                
+                sys.modules[module_name] = module
+                
+                spec.loader.exec_module(module)
+                
+                _globals[module_name] = module
+            elif ext in shared_ext:
+                module = ctypes.CDLL(path)
+
+                _globals[module_name] = module
     
     def include_file(self, path:str, _globals:dict) -> dict:
         """
-        Include Python file, name format : DirnameModulename
+        Include file, name format : DirnameModulename
         """
 
         return self.include_files([path], _globals)

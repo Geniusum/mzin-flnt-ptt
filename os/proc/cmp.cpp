@@ -1,3 +1,4 @@
+/*
 # -> PROJECT NAME : MzIn-FLnT-PTT
 # -> MzIn-FLnT-PTT BRAND, VERSION : 1, DATE : 24/06/2024
 #
@@ -45,53 +46,41 @@
 #
 # All demands in (CONTACT E-MAIL) contact@mazegroup.org /
 # (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
+*/
 
-"Imports"
+/* Imports */
 
-from core.paths import *
-from core.includes import *
-from core.utils import *
-from core.compile import *
+#include <stdio.h>
 
-
-"Plan"
-
-ProcPmp: SoonIncluded
-ProcCmp: SoonIncluded
-LibsSessions: SoonIncluded
+using namespace std;
 
 
-"Compilation"
+/* Classes */
 
-COMPILER().compile_shared(PATHs().join(PATHs().proc_path, "cmp.cpp"))
-
-
-"Includes"
-
-INCLUDER().include_file(PATHs().join(PATHs().proc_path, "pmp.py"), globals())
-INCLUDER().include_file(PATHs().join(PATHs().proc_path, "cmp.so"), globals())
-INCLUDER().include_file(PATHs().join(PATHs().libs_path, "sessions.py"), globals())
+class ProcessClass {
+    public:
+        inline ProcessClass() {
+            printf("CMP Initialized.\n");
+        }
+};
 
 
-"Classes"
+/* Functions */
 
-class RUNNER():
-    def __init__(self) -> None:
-        self.session = LibsSessions.Session()
-        self.pmp = ProcPmp.Process()
-        cmp_argv = ["", self.session.id]
-        ProcCmp.main.argtypes = (ctypes.c_int, ctypes.POINTER(ctypes.c_char_p))
-        ProcCmp.main.restype = None
-        cmp_argc = len(cmp_argv)
-        cmp_argv_conv = (ctypes.c_char_p * cmp_argc)(*map(lambda s: s.encode('utf-8'), cmp_argv))
-        self.cmp = ProcCmp.main(cmp_argc, cmp_argv_conv)
+int Process() {
+    ProcessClass Instance;
+    return 0;
+}
 
-    def act(self) -> None:
-        ...
+int main(int argc, char* argv[]) {
+    int argc_waited = 1;
+    if (argc != argc_waited + 1) {
+        printf("Arguments waited : %d", argc_waited);
+    } else {
+        char* session_id = argv[1];
 
+        printf("%s\n", session_id);
 
-"Start Runner"
-
-if __name__ == "__main__":
-    RUNNER_INSTANCE: RUNNER = RUNNER()
-    RUNNER_INSTANCE.act()
+        Process();
+    }
+}

@@ -48,50 +48,27 @@
 
 "Imports"
 
-from core.paths import *
-from core.includes import *
-from core.utils import *
-from core.compile import *
-
-
-"Plan"
-
-ProcPmp: SoonIncluded
-ProcCmp: SoonIncluded
-LibsSessions: SoonIncluded
-
-
-"Compilation"
-
-COMPILER().compile_shared(PATHs().join(PATHs().proc_path, "cmp.cpp"))
-
-
-"Includes"
-
-INCLUDER().include_file(PATHs().join(PATHs().proc_path, "pmp.py"), globals())
-INCLUDER().include_file(PATHs().join(PATHs().proc_path, "cmp.so"), globals())
-INCLUDER().include_file(PATHs().join(PATHs().libs_path, "sessions.py"), globals())
+import os
 
 
 "Classes"
 
-class RUNNER():
-    def __init__(self) -> None:
-        self.session = LibsSessions.Session()
-        self.pmp = ProcPmp.Process()
-        cmp_argv = ["", self.session.id]
-        ProcCmp.main.argtypes = (ctypes.c_int, ctypes.POINTER(ctypes.c_char_p))
-        ProcCmp.main.restype = None
-        cmp_argc = len(cmp_argv)
-        cmp_argv_conv = (ctypes.c_char_p * cmp_argc)(*map(lambda s: s.encode('utf-8'), cmp_argv))
-        self.cmp = ProcCmp.main(cmp_argc, cmp_argv_conv)
+class COMPILER():
+    class CompilerException(BaseException): ...
+    class GCCExcpetion(CompilerException): ...
+    class NotExistantPath(CompilerException): ...
+    class IsDirectory(CompilerException): ...
 
-    def act(self) -> None:
-        ...
+    def compile_shared(self, path:str):
+        path = path.strip()
 
-
-"Start Runner"
-
-if __name__ == "__main__":
-    RUNNER_INSTANCE: RUNNER = RUNNER()
-    RUNNER_INSTANCE.act()
+        if not os.path.exists(path):
+            raise self.NotExistantPath(path)
+        if os.path.isdir(path):
+            raise self.IsDirectory(path)
+        
+        ext_wtd = ".so"
+        name = os.path.splitext(os.path.basename(path))[0]
+        
+        try: os.system(f"gcc -fPIC -shared -o \"{os.path.join(os.path.dirname(path), name + ext_wtd)}\" \"{path}\"")
+        except Exception as e: raise self.GCCExcpetion(e)
