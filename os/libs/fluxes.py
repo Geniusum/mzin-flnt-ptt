@@ -49,7 +49,7 @@
 "Imports"
 
 import os, threading, time
-#from ..core.utils import *
+
 
 
 "Classes"
@@ -72,7 +72,7 @@ class FluxFile():
         self.delay = delay
         self.content = ...
 
-        self.thread: threading.Thread#SoonUsed
+        self.thread: threading.Thread#SoonUsed # TODO : Remove threads system
 
     def try_get_content(self) -> str:
         try: return open(self.path, encoding="utf-8").read()
