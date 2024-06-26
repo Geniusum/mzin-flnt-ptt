@@ -1,0 +1,15 @@
+[FLUX TEST]
+
+[SECTOR DATA]
+    * Name
+    0x0 STRING John Doe
+
+    * E-Mail
+    0x1 STRING johndoe@mailbox.com
+
+    * Age
+    0x2 INTEGER 34
+
+[SECTOR MAIN]
+    * User data
+    0x0 ADDR DATA:0x0; DATA:0x1; DATA:0x2;

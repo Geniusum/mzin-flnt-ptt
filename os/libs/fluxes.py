@@ -1,0 +1,253 @@
+# -> PROJECT NAME : MzIn-FLnT-PTT
+# -> MzIn-FLnT-PTT BRAND, VERSION : 1, DATE : 24/06/2024
+#
+# --- LICENSE -----------------------------------------------
+#
+# MIT LICENSE
+#
+# Copyright (c) 2024 MazeGroup Softwares / MazeGroup
+# Research Institute / MazeInstance Project
+#
+# Permission is hereby granted, free of charge, to any
+# person obtaining a copy of this software and associated 
+# documentation files (the "Software"), to deal in the
+# Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to
+# do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall
+# be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+# KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
+# THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+# PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+# CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# IN THE SOFTWARE.
+#
+# --- CREDITS -----------------------------------------------
+#
+# MazeInstance Project, started by Genius_um in 2023.
+# Under the name of MazeGroup. First project of organization.
+# *** MazeGroup *** A French Developers Organization.
+# https://mazegroup.org/
+#
+# *** MazeInstance *** A public domain operating system made
+#                      in Python
+#
+# CODE BELOW WAS MADE IN 2024 BY : @Genius_um
+#
+# All demands in (CONTACT E-MAIL) contact@mazegroup.org /
+# (Genius_um's PERSONNAL E-MAIL) geniusum.off@gmail.com
+
+"Imports"
+
+import os, threading, time
+#from ..core.utils import *
+
+
+"Classes"
+
+class FluxFile():
+    class FluxFileException(BaseException): ...
+    class NotExistantPath(FluxFileException): ...
+    class IsDirectory(FluxFileException): ...
+    class FileReadingException(FluxFileException): ...
+    class TranslationException(FluxFileException): ...
+
+    def __init__(self, path:str, delay:float=None) -> None:
+        self.path = path.strip()
+
+        if not os.path.exists(self.path):
+            raise self.NotExistantPath(self.path)
+        if os.path.isdir(self.path):
+            raise self.IsDirectory(self.path)
+        
+        self.delay = delay
+        self.content = ...
+
+        self.thread: threading.Thread#SoonUsed
+
+    def try_get_content(self) -> str:
+        try: return open(self.path, encoding="utf-8").read()
+        except Exception as e: raise self.FileReadingException(e)
+
+    def __monitoring_loop(self):
+        while True:
+            self.content = self.try_get_content()
+
+            if self.delay != None:
+                time.sleep(self.delay)
+
+    def launch_monitoring(self):
+        self.thread = threading.Thread(target=self.__monitoring_loop)
+
+        self.thread.start()
+        print("Thread started.")
+    
+    def hex_address(self, address:str, line_nb:int, ref:bool=False, active_sector:str="") -> int:
+        if not ref:
+            address = address.upper()
+            if not len(address) > 2:
+                raise self.TranslationException(f"Not a valid hex format, line {line_nb}")
+            if not address[:2] == "0X":
+                raise self.TranslationException(f"Not a valid hex format, line {line_nb}")
+            address = int(address[2:], 16)
+            return address
+        else:
+            address = address.upper()
+            tokens = address.split(":")
+            sector = active_sector
+            if len(tokens) == 1:
+                address = tokens[0]
+            elif len(tokens) == 2:
+                address = tokens[1]
+                sector = tokens[0]
+            else:
+                raise self.TranslationException(f"Not a valid reference syntax, line {line_nb}")
+            address = address.upper()
+            if not len(address) > 2:
+                raise self.TranslationException(f"Not a valid hex format, line {line_nb}")
+            if not address[:2] == "0X":
+                raise self.TranslationException(f"Not a valid hex format, line {line_nb}")
+            address = int(address[2:], 16)
+            return {
+                "sector": sector,
+                "address": address
+            }
+
+    def translate(self):
+        r = {
+            "flux_name": None,
+            "sectors": {}
+        }
+
+        started = False
+        active_sector = None
+
+        self.lines = self.content.splitlines()
+        if not len(self.lines):
+            raise self.TranslationException("Empty file.")
+        for index, line in enumerate(self.lines):
+            line = line.strip()
+            line_nb = index + 1
+            if len(line):
+                tag = False
+                tag_content = ""
+                if line.startswith("[") and line.endswith("]"):
+                    tag = True
+                    if not len(line) > 2:
+                        raise self.TranslationException(f"Empty tag, line {line_nb}.")
+                    tag_content = line[1:-1].upper()
+                if tag:
+                    if not len(tag_content):
+                        raise self.TranslationException(f"Empty tag, line {line_nb}.")
+                    parts = tag_content.split(";")
+                    for part_index, part in enumerate(parts):
+                        tokens = part.split()
+                        if tokens[0] == "FLUX":
+                            if len(tokens) != 2:
+                                raise self.TranslationException(f"Waited 2 tokens here, line {line_nb}")
+                            if not started:
+                                started = True
+                                r["flux_name"] = tokens[1]
+                            else:
+                                raise self.TranslationException(f"Redefining flux identity, line {line_nb}")
+                        elif tokens[0] == "SECTOR":
+                            if len(tokens) != 2:
+                                raise self.TranslationException(f"Waited 2 tokens here, line {line_nb}")
+                            active_sector = tokens[1]
+                            if not active_sector in r["sectors"].keys():
+                                r["sectors"][active_sector] = {
+                                    "size": 0,
+                                    "cells": {}
+                                }
+                        elif tokens[0] == "SIZE":
+                            if active_sector == None:
+                                raise self.TranslationException(f"No sector, line {line_nb}")
+                            if len(tokens) != 2:
+                                raise self.TranslationException(f"Waited 2 tokens here, line {line_nb}")
+                            try:
+                                size = int(tokens[1])
+                            except:
+                                raise self.TranslationException(f"Integer waited here, line {line_nb}")
+                            if max(size, 0) != size:
+                                raise self.TranslationException(f"Minimum size at 0, line {line_nb}")
+                            r["sectors"][active_sector]["size"] = size
+                elif line.strip().startswith("*"):
+                    pass
+                else:
+                    tokens = line.split()
+                    if not len(tokens) >= 2:
+                        raise self.TranslationException(f"Waited 2 or more tokens here, line {line_nb}")
+                    if active_sector == None:
+                        raise self.TranslationException(f"No sector, line {line_nb}")
+                    address = tokens[0].upper()
+                    type = tokens[1].upper()
+                    try:
+                        value = " ".join(tokens[2:])
+                    except:
+                        value = None
+                    address = self.hex_address(address, line_nb, False)
+                    if type == "INTEGER":
+                        if value == None: raise self.TranslationException(f"Empty value, line {line_nb}")
+                        try: value = int(value)
+                        except: raise self.TranslationException(f"Value error, line {line_nb}")
+                    elif type == "STRING":
+                        try: value = str(value)
+                        except: raise self.TranslationException(f"Value error, line {line_nb}")
+                    elif type == "DECIMAL":
+                        if value == None: raise self.TranslationException(f"Empty value, line {line_nb}")
+                        try: value = float(value)
+                        except: raise self.TranslationException(f"Value error, line {line_nb}")
+                    elif type == "BOOLEAN":
+                        if value == None: raise self.TranslationException(f"Empty value, line {line_nb}")
+                        try:
+                            value = int(value)
+                            if not value in [0, 1]:
+                                raise self.TranslationException()
+                            if value == 0: value = False
+                            else: value = True
+                        except: raise self.TranslationException(f"Value error, line {line_nb}")
+                    elif type == "ADDR":
+                        if value == None: raise self.TranslationException(f"Empty value, line {line_nb}")
+                        addresses_ = str(value).split(";")
+                        addresses = []
+                        for address in addresses_:
+                            address = address.strip()
+                            if len(address):
+                                address = self.hex_address(address, line_nb, True, active_sector)
+                                if not address["sector"] in r["sectors"].keys():
+                                    raise self.TranslationException(f"Sector not found, line {line_nb}")
+                                addresses.append(address)
+                        value = addresses
+                    elif type == "EMPTY":
+                        value = None
+                    else:
+                        raise self.TranslationException(f"Invalid value type, line {line_nb}")
+                    r["sectors"][active_sector]["cells"][address] = {
+                        "type": type,
+                        "value": value
+                    }
+                    if not r["sectors"][active_sector]["size"] == 0:
+                        if len(r["sectors"][active_sector]["cells"]) > r["sectors"][active_sector]["size"]:
+                            raise self.TranslationException(f"Maximum size exceeded, line {line_nb}")
+        
+        if not started:
+            raise self.TranslationException(f"Flux not started.")
+
+        return r
+
+
+"Tests"
+
+if __name__ == "__main__":
+    ins = FluxFile("test.flx", 0.5)
+    ins.content = ins.try_get_content()
+    print(ins.translate())
