@@ -58,7 +58,9 @@ class FluxFile():
     class NotExistantPath(FluxFileException): ...
     class IsDirectory(FluxFileException): ...
     class FileReadingException(FluxFileException): ...
+    class FileWritingException(FluxFileException): ...
     class TranslationException(FluxFileException): ...
+    class FormatingException(FluxFileException): ...
 
     def __init__(self, path:str, delay:float=None) -> None:
         self.path = path.strip()
@@ -70,6 +72,8 @@ class FluxFile():
         
         self.delay = delay
         self.content = ...
+
+        self.last_result = None
 
         self.thread: threading.Thread#SoonUsed # TODO : Remove threads system
 
@@ -121,7 +125,7 @@ class FluxFile():
                 "address": address
             }
 
-    def translate(self):
+    def translate(self) -> dict:
         r = {
             "flux_name": None,
             "sectors": {}
@@ -241,12 +245,61 @@ class FluxFile():
         if not started:
             raise self.TranslationException(f"Flux not started.")
 
+        self.last_result = r
         return r
 
+    def format(self, flux_trace:dict=None) -> str:
+        if flux_trace == None:
+            if self.last_result == None:
+                raise self.FormatingException(f"Missing result.")
+            flux_trace = self.last_result
+
+        s = f"[FLUX {flux_trace['flux_name']}]\n"
+        for sector_name, _ in flux_trace["sectors"].items():
+            s += f"[SECTOR {sector_name}; SIZE {_['size']}]\n"
+            for cell, __ in _["cells"].items():
+                if not len(str(cell).strip()):
+                    cell = 0
+                address = hex(cell)
+                type_ = __["type"]
+                value = __["value"]
+                if type_ == "BOOLEAN" and value:
+                    value = "1"
+                elif type_ == "BOOLEAN" and not value:
+                    value = "0"
+                if type_ == "EMPTY":
+                    value = ""
+                if type_ == "ADDR":
+                    _v = ""
+                    for addr in value:
+                        _v += f"{addr['sector']}:{hex(addr['address'])}; "
+                    value = _v
+                value = str(value)
+                s += f"    {address} {type_} {value}\n"
+
+        return s
+
+    def write_file(self, path:str, s:str):
+        try:
+            f = open(path, "w+")
+            f.write(s)
+            f.close()
+        except Exception as e:
+            raise self.FileWritingException(e)
+
+    def write_file_dir(self, name:str, s:str):
+        try:
+            f = open(os.path.join(os.path.dirname(self.path), name), "w+")
+            f.write(s)
+            f.close()
+        except Exception as e:
+            raise self.FileWritingException(e)
+            
 
 "Tests"
 
 if __name__ == "__main__":
-    ins = FluxFile("test.flx", 0.5)
+    ins = FluxFile("out.flx", 0.5)
     ins.content = ins.try_get_content()
-    print(ins.translate())
+    ins.translate()
+    ins.write_file_dir("out2.flx", ins.format())

@@ -1,0 +1,7 @@
+[FLUX TEST]
+[SECTOR DATA; SIZE 0]
+    0x0 STRING John Doe
+    0x1 STRING johndoe@mailbox.com
+    0x2 INTEGER 34
+[SECTOR MAIN; SIZE 0]
+    0x0 ADDR DATA:0x0; DATA:0x1; DATA:0x2; 
